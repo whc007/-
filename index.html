@@ -3,15 +3,17 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>登录 · Sign In</title>
+<title>登录 · 蜡笔小新风</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=ZCOOL+KuaiLe&family=Ma+Shan+Zheng&display=swap" rel="stylesheet">
 <style>
   :root {
-    --ink: #4a4458;
-    --ink-soft: #8b8499;
-    --line: rgba(120, 110, 150, 0.18);
-    --accent-a: #c9a7eb;
-    --accent-b: #f5c7d8;
-    --accent-c: #a7c7e7;
+    --red: #ef4b3c;
+    --yellow: #ffd83d;
+    --blue: #4aa3e8;
+    --skin: #ffce9e;
+    --ink: #2b2b2b;
+    --cream: #fff4cf;
   }
 
   * { box-sizing: border-box; margin: 0; padding: 0; }
@@ -19,9 +21,14 @@
   html, body { height: 100%; }
 
   body {
-    font-family: "Noto Serif SC", "Songti SC", "STSong", Georgia, serif;
+    font-family: "ZCOOL KuaiLe", "Ma Shan Zheng", "Comic Sans MS", "PingFang SC", sans-serif;
     color: var(--ink);
-    background: linear-gradient(135deg, #f3e7fe 0%, #fbe9f3 38%, #e7f0fb 100%);
+    background-color: var(--cream);
+    background-image:
+      radial-gradient(circle at 18% 22%, rgba(255,216,61,0.45) 0 9px, transparent 10px),
+      radial-gradient(circle at 82% 30%, rgba(74,163,232,0.35) 0 7px, transparent 8px),
+      radial-gradient(circle at 70% 80%, rgba(239,75,60,0.30) 0 8px, transparent 9px),
+      radial-gradient(circle at 30% 78%, rgba(74,163,232,0.25) 0 6px, transparent 7px);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -29,193 +36,179 @@
     position: relative;
   }
 
-  /* 漂浮的光斑 */
-  .orb {
-    position: absolute;
-    border-radius: 50%;
-    filter: blur(40px);
-    opacity: 0.55;
-    animation: drift 18s ease-in-out infinite;
-  }
-  .orb.one   { width: 360px; height: 360px; background: var(--accent-a); top: -90px; left: -60px; }
-  .orb.two   { width: 300px; height: 300px; background: var(--accent-b); bottom: -80px; right: -40px; animation-delay: -6s; }
-  .orb.three { width: 240px; height: 240px; background: var(--accent-c); bottom: 30%; left: 55%; animation-delay: -12s; }
-
-  @keyframes drift {
-    0%, 100% { transform: translate(0, 0) scale(1); }
-    33%      { transform: translate(30px, -40px) scale(1.08); }
-    66%      { transform: translate(-25px, 25px) scale(0.95); }
-  }
+  /* 蜡笔涂鸦装饰 */
+  .scribble { position: absolute; opacity: 0.5; }
+  .s1 { top: 6%; left: 8%; transform: rotate(-12deg); font-size: 40px; color: var(--red); }
+  .s2 { bottom: 8%; right: 9%; transform: rotate(10deg); font-size: 36px; color: var(--blue); }
 
   .card {
     position: relative;
     z-index: 1;
     width: min(92vw, 380px);
-    padding: 48px 40px 40px;
-    background: rgba(255, 255, 255, 0.55);
-    backdrop-filter: blur(18px) saturate(140%);
-    -webkit-backdrop-filter: blur(18px) saturate(140%);
-    border: 1px solid rgba(255, 255, 255, 0.7);
-    border-radius: 28px;
-    box-shadow: 0 20px 60px rgba(150, 130, 190, 0.25);
-    animation: rise 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+    padding: 40px 34px 36px;
+    background: #fffdf5;
+    border: 3px solid var(--ink);
+    border-radius: 26px 18px 30px 16px;
+    box-shadow: 7px 7px 0 var(--ink);
+    filter: url(#wobble);
+    animation: pop 0.6s cubic-bezier(0.22, 1.4, 0.4, 1) both;
+  }
+  @keyframes pop {
+    from { transform: scale(0.85) rotate(-2deg); opacity: 0; }
+    to   { transform: scale(1) rotate(0); opacity: 1; }
   }
 
-  @keyframes rise {
-    from { opacity: 0; transform: translateY(24px); }
-    to   { opacity: 1; transform: translateY(0); }
+  .face {
+    width: 74px; height: 74px;
+    margin: 0 auto 14px;
+    position: relative;
   }
-
-  .seal {
-    width: 56px; height: 56px;
-    margin: 0 auto 22px;
-    border-radius: 50%;
-    background: linear-gradient(135deg, var(--accent-a), var(--accent-b));
-    display: flex; align-items: center; justify-content: center;
-    box-shadow: 0 8px 24px rgba(190, 150, 220, 0.45);
+  .face .head {
+    position: absolute; inset: 0;
+    background: var(--skin);
+    border: 3px solid var(--ink);
+    border-radius: 50% 50% 48% 52% / 55% 55% 45% 45%;
   }
-  .seal span {
-    font-size: 26px; color: #fff; font-weight: 600;
-  }
+  .face .eye { position: absolute; top: 30px; width: 7px; height: 9px; background: var(--ink); border-radius: 50%; }
+  .face .eye.l { left: 22px; }
+  .face .eye.r { right: 22px; }
+  .face .brow { position: absolute; top: 22px; left: 18px; right: 18px; height: 3px; background: var(--ink); transform: rotate(-8deg); border-radius: 3px; }
+  .face .nose { position: absolute; top: 40px; left: 50%; width: 6px; height: 6px; background: var(--ink); border-radius: 50%; transform: translateX(-50%); }
+  .face .mouth { position: absolute; bottom: 16px; left: 50%; transform: translateX(-50%); width: 30px; height: 14px; border: 3px solid var(--ink); border-top: none; border-radius: 0 0 30px 30px; }
+  .face .cheek { position: absolute; bottom: 22px; width: 10px; height: 6px; background: #ff9a8b; border-radius: 50%; opacity: 0.7; }
+  .face .cheek.l { left: 8px; }
+  .face .cheek.r { right: 8px; }
 
   h1 {
     text-align: center;
-    font-size: 24px;
-    font-weight: 500;
-    letter-spacing: 4px;
-    margin-bottom: 6px;
+    font-size: 30px;
+    letter-spacing: 3px;
+    color: var(--red);
+    text-shadow: 2px 2px 0 var(--yellow);
+    margin-bottom: 4px;
   }
   .sub {
     text-align: center;
-    font-size: 13px;
-    color: var(--ink-soft);
-    letter-spacing: 1px;
-    margin-bottom: 34px;
+    font-size: 14px;
+    color: var(--ink);
+    margin-bottom: 26px;
   }
+  .sub b { color: var(--blue); }
 
-  .field {
-    position: relative;
-    margin-bottom: 22px;
-  }
+  .field { position: relative; margin-bottom: 18px; }
   .field input {
     width: 100%;
-    padding: 14px 16px;
+    padding: 13px 15px;
     font-size: 15px;
     font-family: inherit;
     color: var(--ink);
-    background: rgba(255, 255, 255, 0.6);
-    border: 1px solid var(--line);
-    border-radius: 14px;
+    background: #fffdf5;
+    border: 3px solid var(--ink);
+    border-radius: 14px 10px 16px 12px;
     outline: none;
-    transition: border-color 0.25s, box-shadow 0.25s, background 0.25s;
+    box-shadow: 3px 3px 0 rgba(43,43,43,0.15);
+    transition: box-shadow 0.15s, transform 0.1s;
   }
-  .field input::placeholder { color: transparent; }
+  .field input:focus { box-shadow: 3px 3px 0 var(--blue); transform: translate(-1px,-1px); }
   .field label {
-    position: absolute;
-    left: 16px;
-    top: 14px;
-    font-size: 15px;
-    color: var(--ink-soft);
-    pointer-events: none;
-    transition: 0.2s ease;
-    background: transparent;
-    padding: 0 4px;
-  }
-  .field input:focus,
-  .field input:not(:placeholder-shown) {
-    border-color: var(--accent-a);
-    background: rgba(255, 255, 255, 0.85);
-    box-shadow: 0 0 0 4px rgba(201, 167, 235, 0.18);
+    position: absolute; left: 14px; top: 13px;
+    font-size: 15px; color: #999;
+    pointer-events: none; transition: 0.15s ease;
+    background: #fffdf5; padding: 0 4px;
   }
   .field input:focus + label,
   .field input:not(:placeholder-shown) + label {
-    top: -9px;
-    left: 12px;
-    font-size: 12px;
-    color: var(--accent-a);
-    background: rgba(255, 255, 255, 0.9);
-    border-radius: 6px;
+    top: -10px; left: 11px; font-size: 12px; color: var(--red);
   }
 
   .row {
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    font-size: 13px;
-    color: var(--ink-soft);
-    margin: -6px 2px 26px;
+    display: flex; align-items: center; justify-content: space-between;
+    font-size: 13px; margin: -4px 4px 22px;
   }
-  .row label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
-  .row a { color: var(--accent-a); text-decoration: none; }
-  .row a:hover { text-decoration: underline; }
+  .row label { display: flex; align-items: center; gap: 5px; cursor: pointer; }
+  .row a { color: var(--blue); text-decoration: none; }
+  .row a:hover { text-decoration: underline wavy; }
 
   button.submit {
     width: 100%;
-    padding: 14px;
-    font-size: 15px;
+    padding: 13px;
     font-family: inherit;
-    letter-spacing: 6px;
+    font-size: 19px;
+    letter-spacing: 4px;
     color: #fff;
-    border: none;
-    border-radius: 14px;
+    border: 3px solid var(--ink);
+    border-radius: 16px 12px 18px 14px;
     cursor: pointer;
-    background: linear-gradient(135deg, var(--accent-a), var(--accent-b));
-    box-shadow: 0 10px 26px rgba(200, 150, 215, 0.45);
-    transition: transform 0.15s, box-shadow 0.25s, filter 0.25s;
+    background: var(--red);
+    box-shadow: 5px 5px 0 var(--ink);
+    transition: transform 0.08s, box-shadow 0.08s;
   }
-  button.submit:hover { filter: brightness(1.04); transform: translateY(-1px); }
-  button.submit:active { transform: translateY(1px); box-shadow: 0 6px 16px rgba(200, 150, 215, 0.4); }
+  button.submit:hover { background: #ff5d4d; }
+  button.submit:active { transform: translate(5px,5px); box-shadow: 0 0 0 var(--ink); }
 
-  .foot {
-    text-align: center;
-    font-size: 12px;
-    color: var(--ink-soft);
-    margin-top: 22px;
-  }
-  .foot a { color: var(--accent-a); text-decoration: none; }
+  .foot { text-align: center; font-size: 13px; margin-top: 20px; }
+  .foot a { color: var(--red); text-decoration: none; }
+  .foot a:hover { text-decoration: underline wavy; }
 </style>
 </head>
 <body>
-  <div class="orb one"></div>
-  <div class="orb two"></div>
-  <div class="orb three"></div>
+  <!-- 手绘抖动滤镜 -->
+  <svg width="0" height="0" style="position:absolute">
+    <filter id="wobble">
+      <feTurbulence type="fractalNoise" baseFrequency="0.012" numOctaves="2" result="noise"/>
+      <feDisplacementMap in="SourceGraphic" in2="noise" scale="3.5"/>
+    </filter>
+  </svg>
+
+  <div class="scribble s1">★</div>
+  <div class="scribble s2">♡</div>
 
   <main class="card">
-    <div class="seal"><span>月</span></div>
-    <h1>登 录</h1>
-    <p class="sub">Welcome back · 欢迎回来</p>
+    <div class="face">
+      <div class="head"></div>
+      <div class="brow"></div>
+      <div class="eye l"></div>
+      <div class="eye r"></div>
+      <div class="nose"></div>
+      <div class="cheek l"></div>
+      <div class="cheek r"></div>
+      <div class="mouth"></div>
+    </div>
+
+    <h1>登 录 啦！</h1>
+    <p class="sub">我是<b>野原新之助</b>，快来一起玩～</p>
 
     <form id="loginForm" autocomplete="off">
       <div class="field">
         <input type="text" id="username" placeholder=" " required />
-        <label for="username">用户名 / 邮箱</label>
+        <label for="username">名字 / 邮箱</label>
       </div>
       <div class="field">
         <input type="password" id="password" placeholder=" " required />
-        <label for="password">密码</label>
+        <label for="password">密码（别告诉美冴）</label>
       </div>
 
       <div class="row">
         <label><input type="checkbox" id="remember" /> 记住我</label>
-        <a href="#">忘记密码？</a>
+        <a href="#">忘记啦？</a>
       </div>
 
-      <button class="submit" type="submit">登 录</button>
+      <button class="submit" type="submit">出 动！</button>
     </form>
 
-    <p class="foot">还没有账号？<a href="#">立即注册</a></p>
+    <p class="foot">还没有号？<a href="#">马上去注册</a></p>
   </main>
 
   <script>
     document.getElementById('loginForm').addEventListener('submit', function (e) {
       e.preventDefault();
-      const username = document.getElementById('username').value.trim();
-      const password = document.getElementById('password').value;
-      // 仅前端示例：此处接入后端接口即可
-      if (username && password) {
+      const u = document.getElementById('username').value.trim();
+      const p = document.getElementById('password').value;
+      if (u && p) {
         const btn = document.querySelector('.submit');
-        btn.textContent = '登 录 中…';
-        setTimeout(() => { btn.textContent = '登 录'; alert('登录请求已发出（示例）\n用户：' + username); }, 700);
+        const old = btn.textContent;
+        btn.textContent = '冲 呀！';
+        setTimeout(() => { btn.textContent = old; alert('动感超人出击！\n欢迎你，' + u + '～'); }, 600);
       }
     });
   </script>
