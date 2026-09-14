@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>登录 · Sign In</title>
+<style>
+  :root {
+    --ink: #4a4458;
+    --ink-soft: #8b8499;
+    --line: rgba(120, 110, 150, 0.18);
+    --accent-a: #c9a7eb;
+    --accent-b: #f5c7d8;
+    --accent-c: #a7c7e7;
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  html, body { height: 100%; }
+
+  body {
+    font-family: "Noto Serif SC", "Songti SC", "STSong", Georgia, serif;
+    color: var(--ink);
+    background: linear-gradient(135deg, #f3e7fe 0%, #fbe9f3 38%, #e7f0fb 100%);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    overflow: hidden;
+    position: relative;
+  }
+
+  /* 漂浮的光斑 */
+  .orb {
+    position: absolute;
+    border-radius: 50%;
+    filter: blur(40px);
+    opacity: 0.55;
+    animation: drift 18s ease-in-out infinite;
+  }
+  .orb.one   { width: 360px; height: 360px; background: var(--accent-a); top: -90px; left: -60px; }
+  .orb.two   { width: 300px; height: 300px; background: var(--accent-b); bottom: -80px; right: -40px; animation-delay: -6s; }
+  .orb.three { width: 240px; height: 240px; background: var(--accent-c); bottom: 30%; left: 55%; animation-delay: -12s; }
+
+  @keyframes drift {
+    0%, 100% { transform: translate(0, 0) scale(1); }
+    33%      { transform: translate(30px, -40px) scale(1.08); }
+    66%      { transform: translate(-25px, 25px) scale(0.95); }
+  }
+
+  .card {
+    position: relative;
+    z-index: 1;
+    width: min(92vw, 380px);
+    padding: 48px 40px 40px;
+    background: rgba(255, 255, 255, 0.55);
+    backdrop-filter: blur(18px) saturate(140%);
+    -webkit-backdrop-filter: blur(18px) saturate(140%);
+    border: 1px solid rgba(255, 255, 255, 0.7);
+    border-radius: 28px;
+    box-shadow: 0 20px 60px rgba(150, 130, 190, 0.25);
+    animation: rise 0.9s cubic-bezier(0.22, 1, 0.36, 1) both;
+  }
+
+  @keyframes rise {
+    from { opacity: 0; transform: translateY(24px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .seal {
+    width: 56px; height: 56px;
+    margin: 0 auto 22px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--accent-a), var(--accent-b));
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: 0 8px 24px rgba(190, 150, 220, 0.45);
+  }
+  .seal span {
+    font-size: 26px; color: #fff; font-weight: 600;
+  }
+
+  h1 {
+    text-align: center;
+    font-size: 24px;
+    font-weight: 500;
+    letter-spacing: 4px;
+    margin-bottom: 6px;
+  }
+  .sub {
+    text-align: center;
+    font-size: 13px;
+    color: var(--ink-soft);
+    letter-spacing: 1px;
+    margin-bottom: 34px;
+  }
+
+  .field {
+    position: relative;
+    margin-bottom: 22px;
+  }
+  .field input {
+    width: 100%;
+    padding: 14px 16px;
+    font-size: 15px;
+    font-family: inherit;
+    color: var(--ink);
+    background: rgba(255, 255, 255, 0.6);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    outline: none;
+    transition: border-color 0.25s, box-shadow 0.25s, background 0.25s;
+  }
+  .field input::placeholder { color: transparent; }
+  .field label {
+    position: absolute;
+    left: 16px;
+    top: 14px;
+    font-size: 15px;
+    color: var(--ink-soft);
+    pointer-events: none;
+    transition: 0.2s ease;
+    background: transparent;
+    padding: 0 4px;
+  }
+  .field input:focus,
+  .field input:not(:placeholder-shown) {
+    border-color: var(--accent-a);
+    background: rgba(255, 255, 255, 0.85);
+    box-shadow: 0 0 0 4px rgba(201, 167, 235, 0.18);
+  }
+  .field input:focus + label,
+  .field input:not(:placeholder-shown) + label {
+    top: -9px;
+    left: 12px;
+    font-size: 12px;
+    color: var(--accent-a);
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 6px;
+  }
+
+  .row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 13px;
+    color: var(--ink-soft);
+    margin: -6px 2px 26px;
+  }
+  .row label { display: flex; align-items: center; gap: 6px; cursor: pointer; }
+  .row a { color: var(--accent-a); text-decoration: none; }
+  .row a:hover { text-decoration: underline; }
+
+  button.submit {
+    width: 100%;
+    padding: 14px;
+    font-size: 15px;
+    font-family: inherit;
+    letter-spacing: 6px;
+    color: #fff;
+    border: none;
+    border-radius: 14px;
+    cursor: pointer;
+    background: linear-gradient(135deg, var(--accent-a), var(--accent-b));
+    box-shadow: 0 10px 26px rgba(200, 150, 215, 0.45);
+    transition: transform 0.15s, box-shadow 0.25s, filter 0.25s;
+  }
+  button.submit:hover { filter: brightness(1.04); transform: translateY(-1px); }
+  button.submit:active { transform: translateY(1px); box-shadow: 0 6px 16px rgba(200, 150, 215, 0.4); }
+
+  .foot {
+    text-align: center;
+    font-size: 12px;
+    color: var(--ink-soft);
+    margin-top: 22px;
+  }
+  .foot a { color: var(--accent-a); text-decoration: none; }
+</style>
+</head>
+<body>
+  <div class="orb one"></div>
+  <div class="orb two"></div>
+  <div class="orb three"></div>
+
+  <main class="card">
+    <div class="seal"><span>月</span></div>
+    <h1>登 录</h1>
+    <p class="sub">Welcome back · 欢迎回来</p>
+
+    <form id="loginForm" autocomplete="off">
+      <div class="field">
+        <input type="text" id="username" placeholder=" " required />
+        <label for="username">用户名 / 邮箱</label>
+      </div>
+      <div class="field">
+        <input type="password" id="password" placeholder=" " required />
+        <label for="password">密码</label>
+      </div>
+
+      <div class="row">
+        <label><input type="checkbox" id="remember" /> 记住我</label>
+        <a href="#">忘记密码？</a>
+      </div>
+
+      <button class="submit" type="submit">登 录</button>
+    </form>
+
+    <p class="foot">还没有账号？<a href="#">立即注册</a></p>
+  </main>
+
+  <script>
+    document.getElementById('loginForm').addEventListener('submit', function (e) {
+      e.preventDefault();
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+      // 仅前端示例：此处接入后端接口即可
+      if (username && password) {
+        const btn = document.querySelector('.submit');
+        btn.textContent = '登 录 中…';
+        setTimeout(() => { btn.textContent = '登 录'; alert('登录请求已发出（示例）\n用户：' + username); }, 700);
+      }
+    });
+  </script>
+</body>
+</html>
