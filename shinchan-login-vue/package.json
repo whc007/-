@@ -1,0 +1,19 @@
+{
+  "name": "shinchan-login-vue",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "description": "蜡笔小新风登录页 —— Vue 3 + Vite 版本",
+  "scripts": {
+    "dev": "vite",
+    "build": "vite build",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "vue": "^3.5.43"
+  },
+  "devDependencies": {
+    "@vitejs/plugin-vue": "^6.0.9",
+    "vite": "^8.3.0"
+  }
+}
