@@ -1,0 +1,29 @@
+:root {
+  /* 设计令牌：颜色 */
+  --red: #ef4b3c;
+  --yellow: #ffd83d;
+  --blue: #4aa3e8;
+  --skin: #ffce9e;
+  --ink: #2b2b2b;
+  --cream: #fff4cf;
+  --card-bg: #fffdf5;
+  --cheek: #ff9a8b;
+
+  /* 设计令牌：圆角（手绘不规则感） */
+  --radius-card: 26px 18px 30px 16px;
+  --radius-input: 14px 10px 16px 12px;
+  --radius-button: 16px 12px 18px 14px;
+
+  /* 设计令牌：硬阴影 / 描边 */
+  --shadow-card: 7px 7px 0 var(--ink);
+  --shadow-input: 3px 3px 0 rgba(43, 43, 43, 0.15);
+  --shadow-input-focus: 3px 3px 0 var(--blue);
+  --shadow-button: 5px 5px 0 var(--ink);
+
+  /* 设计令牌：动效 */
+  --ease-pop: cubic-bezier(0.22, 1.4, 0.4, 1);
+  --dur-pop: 0.6s;
+
+  /* 设计令牌：字体 */
+  --font-display: "ZCOOL KuaiLe", "Ma Shan Zheng", "Comic Sans MS", "PingFang SC", sans-serif;
+}

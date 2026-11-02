@@ -4,8 +4,9 @@
 
 ## 技术栈
 
-- Vue 3.5（`<script setup>` + `defineModel` + `useId`）
+- Vue 3.5（`<script setup>` + `defineModel`）
 - Vite 8 构建 / 开发服务器（依赖 Node 20.19+ 或 22.12+）
+- vue-router 4（`/login`、`/register` 多页路由）
 - 纯 CSS（CSS 变量作为设计令牌，无 UI 框架依赖）
 
 ## 运行效果
@@ -42,8 +43,10 @@ shinchan-login-vue/
 ├── package.json
 ├── vite.config.js
 └── src/
-    ├── main.js                     # 应用入口：创建实例、引入全局样式
-    ├── App.vue                     # 根组件：滤镜 + 背景涂鸦 + 登录卡片
+    ├── main.js                     # 应用入口：创建实例、挂载路由、引入全局样式
+    ├── App.vue                     # 根组件：滤镜 + 背景涂鸦 + <router-view>
+    ├── router/
+    │   └── index.js                # vue-router：/login 与 /register 路由
     ├── assets/
     │   └── styles/
     │       ├── variables.css       # 设计令牌：颜色 / 圆角 / 阴影 / 动效时长 / 字体
@@ -51,12 +54,24 @@ shinchan-login-vue/
     ├── components/
     │   ├── WobbleFilter.vue        # 手绘抖动滤镜（SVG feTurbulence + feDisplacementMap）
     │   ├── ShinchanFace.vue        # 纯 CSS 拼的小新头像
-    │   ├── FormField.vue           # 浮动标签输入框（v-model，可复用）
+    │   ├── FormField.vue           # 浮动标签输入框（defineModel，可复用）
     │   ├── ToastNote.vue           # 手绘风提示气泡（替代 window.alert）
-    │   └── LoginCard.vue           # 登录卡片：组装以上组件
+    │   ├── LoginCard.vue           # 登录卡片：组装以上组件（路由 /login）
+    │   └── RegisterCard.vue        # 注册卡片：复用 FormField / ShinchanFace / ToastNote（路由 /register）
     └── composables/
-        └── useLoginForm.js         # 登录表单逻辑（数据 / 校验 / 提交 / 反馈）
+        ├── useLoginForm.js         # 登录表单逻辑（数据 / 校验 / 提交 / 反馈）
+        └── useRegisterForm.js      # 注册表单逻辑（邮箱格式 / 密码强度 / 两次一致）
 ```
+
+## 路由
+
+| 路径 | 页面 | 组件 |
+| --- | --- | --- |
+| `/` | 重定向到 `/login` | — |
+| `/login` | 登录页 | `LoginCard.vue` |
+| `/register` | 注册页（懒加载） | `RegisterCard.vue` |
+
+登录页底部「马上去注册」、注册页底部「马上去登录」用 `<router-link>` 互跳，两页共享 `App.vue` 的背景涂鸦与抖动滤镜。
 
 ## 改造对照说明
 
@@ -84,7 +99,7 @@ shinchan-login-vue/
 
 ## 后续可以做什么
 
-- 表单校验升级：目前只做非空校验，可换成 `vee-validate` + `zod`
-- 组件复用：`FormField` 已支持任意 `label` / `type`，注册页可直接复用
-- 状态管理：若后续有多页面，可以引入 `pinia` 存放登录态
+- 表单校验升级：目前登录只做非空校验、注册做了邮箱/密码强度/一致性校验，可换成 `vee-validate` + `zod` 统一方案
+- 状态管理：若后续有多页面/登录态共享，可以引入 `pinia` 存放登录态（目前只是前端演示，未持久化）
+- 真实接口：两个 composable 都留好了 `onLogin` / `onRegister` 回调，换成 `fetch` / `axios` 对接后端即可
 - 样式方案：如果项目变大，可考虑 `unocss` 或 `tailwind`，当前纯 CSS 变量已足够
