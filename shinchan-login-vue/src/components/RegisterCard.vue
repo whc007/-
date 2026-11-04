@@ -37,17 +37,29 @@ import ShinchanFace from './ShinchanFace.vue'
 import FormField from './FormField.vue'
 import ToastNote from './ToastNote.vue'
 
-const { username, email, password, confirm, submitting, toast, error, handleSubmit, closeToast } =
-  useRegisterForm()
+// 后端地址：默认走 Vite 开发代理（/api -> 8081）；
+// 生产构建可通过环境变量 VITE_API_BASE 指定，例如 http://localhost:8081
+const API_BASE = import.meta.env.VITE_API_BASE || ''
 
-// 接入真实接口的位置：把这里换成 fetch / axios 即可
-function onRegister({ username, email }) {
-  // 示例：await fetch('/api/register', { method: 'POST', body: JSON.stringify(payload) })
-  console.log('注册请求：', username, email)
+// 真正对接后端的注册请求；失败需抛出带 message 的错误，由 composable 显示
+async function onRegister({ username, email, password }) {
+  const res = await fetch(`${API_BASE}/api/register`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, email, password }),
+  })
+  const data = await res.json()
+  if (data.code !== 0) {
+    throw new Error(data.message || '注册失败')
+  }
+  return data
 }
 
+const { username, email, password, confirm, submitting, toast, error, handleSubmit, closeToast } =
+  useRegisterForm({ onRegister })
+
 function onSubmit() {
-  handleSubmit(onRegister)
+  handleSubmit()
 }
 </script>
 

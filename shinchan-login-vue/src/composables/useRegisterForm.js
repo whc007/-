@@ -2,14 +2,12 @@ import { ref, computed } from 'vue'
 
 /**
  * 注册表单逻辑（数据 / 校验 / 提交 / 反馈）
- * 与 useLoginForm 保持同一套交互节奏：
- *  - 提交过程中按钮文案变为「冲 呀！」
- *  - 延迟 600ms 才给出反馈
+ * 与原页面保持一致的交互节奏，但此处会真正调用后端 /api/register。
  *
  * 校验规则：名字非空、邮箱格式、密码至少 6 位、两次密码一致。
  *
  * @param {object} [options]
- * @param {(payload: {username:string,email:string,password:string}) => void|Promise<void>} [options.onRegister] 接入真实接口的位置
+ * @param {(payload: {username:string,email:string,password:string}) => Promise<void>} [options.onRegister] 真实注册请求（由组件注入，内部 fetch 后端）
  */
 export function useRegisterForm({ onRegister } = {}) {
   const username = ref('')
@@ -18,7 +16,7 @@ export function useRegisterForm({ onRegister } = {}) {
   const confirm = ref('')
   const submitting = ref(false)
   const toast = ref('') // 非空时显示提示气泡
-  const error = ref('') // 校验失败的具体原因
+  const error = ref('') // 校验失败 / 后端返回的具体原因
 
   const emailOk = computed(() =>
     /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.value.trim())
@@ -36,7 +34,7 @@ export function useRegisterForm({ onRegister } = {}) {
     toast.value = ''
   }
 
-  function handleSubmit() {
+  async function handleSubmit() {
     error.value = ''
 
     if (!canSubmit.value || submitting.value) {
@@ -55,17 +53,19 @@ export function useRegisterForm({ onRegister } = {}) {
       password: password.value,
     }
 
-    // 与原页面一致的 600ms 延迟反馈
-    setTimeout(() => {
-      submitting.value = false
-
+    try {
+      // 真正调用后端；onRegister 失败时应 throw 一个带 message 的错误
       if (typeof onRegister === 'function') {
-        onRegister(payload)
+        await onRegister(payload)
       }
-
       toast.value = `动感超人欢迎你！\n${payload.username} 注册成功～`
+      // 自动消失
       setTimeout(closeToast, 2600)
-    }, 600)
+    } catch (e) {
+      error.value = e && e.message ? e.message : '注册失败了，待会儿再试'
+    } finally {
+      submitting.value = false
+    }
   }
 
   return {

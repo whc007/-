@@ -19,6 +19,10 @@
         <a href="#">忘记啦？</a>
       </div>
 
+      <div class="row" v-if="error">
+        <span class="err">{{ error }}</span>
+      </div>
+
       <button class="submit" type="submit" :disabled="submitting">
         {{ submitting ? '冲 呀！' : '出 动！' }}
       </button>
@@ -36,17 +40,29 @@ import ShinchanFace from './ShinchanFace.vue'
 import FormField from './FormField.vue'
 import ToastNote from './ToastNote.vue'
 
-const { username, password, remember, submitting, toast, handleSubmit, closeToast } =
-  useLoginForm()
+// 后端地址：默认走 Vite 开发代理（/api -> 8081）；
+// 生产构建可通过环境变量 VITE_API_BASE 指定，例如 http://localhost:8081
+const API_BASE = import.meta.env.VITE_API_BASE || ''
 
-// 接入真实接口的位置：把这里换成 fetch / axios 即可
-function onLogin({ username }) {
-  // 示例：await fetch('/api/login', { method: 'POST', body: JSON.stringify(payload) })
-  console.log('登录请求：', username)
+// 真正对接后端的登录请求；失败需抛出带 message 的错误，由 composable 显示
+async function onLogin({ username, password }) {
+  const res = await fetch(`${API_BASE}/api/login`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ username, password }),
+  })
+  const data = await res.json()
+  if (data.code !== 0) {
+    throw new Error(data.message || '登录失败')
+  }
+  return data
 }
 
+const { username, password, remember, submitting, toast, error, handleSubmit, closeToast } =
+  useLoginForm({ onLogin })
+
 function onSubmit() {
-  handleSubmit(onLogin)
+  handleSubmit()
 }
 </script>
 
@@ -94,6 +110,10 @@ h1 {
   align-items: center;
   gap: 5px;
   cursor: pointer;
+}
+.row .err {
+  color: var(--red);
+  font-weight: bold;
 }
 .row a {
   color: var(--blue);
