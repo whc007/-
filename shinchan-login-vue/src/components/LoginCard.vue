@@ -35,10 +35,13 @@
 </template>
 
 <script setup>
+import { useRouter } from 'vue-router'
 import { useLoginForm } from '../composables/useLoginForm.js'
 import ShinchanFace from './ShinchanFace.vue'
 import FormField from './FormField.vue'
 import ToastNote from './ToastNote.vue'
+
+const router = useRouter()
 
 // 后端地址：默认走 Vite 开发代理（/api -> 8081）；
 // 生产构建可通过环境变量 VITE_API_BASE 指定，例如 http://localhost:8081
@@ -55,6 +58,11 @@ async function onLogin({ username, password }) {
   if (data.code !== 0) {
     throw new Error(data.message || '登录失败')
   }
+  // 记住当前用户（仅前端会话），并给首页一个欢迎标记
+  sessionStorage.setItem('shinchan-user', JSON.stringify(data.data || { username }))
+  sessionStorage.setItem('shinchan-welcome', '1')
+  // 让提示气泡露个脸，再跳首页
+  setTimeout(() => router.push('/home'), 1100)
   return data
 }
 
