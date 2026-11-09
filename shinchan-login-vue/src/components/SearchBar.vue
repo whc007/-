@@ -1,5 +1,5 @@
 <template>
-  <!-- 首页搜索栏：大输入框 + 按钮 + 热门标签（仅前端，搜索未接后端） -->
+  <!-- 首页搜索栏：大输入框 + 按钮 + 热门标签（走 /api/contents/search） -->
   <div class="search">
     <div class="box">
       <input
@@ -31,7 +31,7 @@ import { ref } from 'vue'
 const emit = defineEmits(['search'])
 
 const keyword = ref('')
-const hots = ['动感超人', '康达姆机器人', '巧克比', '小白', '风间彻', '妮妮']
+const hots = ['动感超人', '剧场版', '康达姆机器人', '巧克比', '小白', '烤肉', '恐龙', '妮妮']
 
 function submit() {
   const k = keyword.value.trim()

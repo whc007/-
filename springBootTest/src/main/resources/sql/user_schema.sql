@@ -29,3 +29,8 @@ CREATE TABLE IF NOT EXISTS sys_user
   DEFAULT CHARSET = utf8mb4
   COLLATE = utf8mb4_general_ci
   COMMENT = '用户表';
+
+-- 演示账号：demo / 123456（BCrypt 加密，登录页可一键填入）
+-- username 唯一键 + INSERT IGNORE：重复执行不报错，也不会覆盖已修改的密码
+INSERT IGNORE INTO sys_user (username, email, password)
+VALUES ('demo', 'demo@shinchan.local', '$2a$10$c5RbzzfL7RMXOFEWRgXQLOB5OM3HzizOuCUj51nlAsSnBIUNNW6Ry');

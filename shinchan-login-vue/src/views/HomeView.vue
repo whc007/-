@@ -1,31 +1,69 @@
 <template>
   <!-- 首页：整页布局（body 是登录页居中 flex，这里自己占满并滚动） -->
   <div class="home">
-    <NavBar :username="username" @logout="onLogout" @nav-todo="onNavTodo" />
+    <NavBar
+      :username="username"
+      :items="navItems"
+      :current="navCurrent"
+      @logout="onLogout"
+      @nav="onNav"
+    />
 
     <main class="content">
       <section class="hero">
         <h1>今天想找点啥？</h1>
-        <p class="sub">春日部乐园 · 搜你喜欢的动画、玩具和点心</p>
+        <p class="sub">春日部乐园 · 动画、剧场版、角色和点心，全都在这里</p>
         <SearchBar ref="searchBar" @search="onSearch" />
       </section>
 
+      <DailyQuote class="daily" />
+
       <section class="section">
-        <h2>
-          <span class="mark">★</span>
-          {{ searching ? `「${searchKeyword}」的搜索结果（${cards.length} 条）` : '今日推荐' }}
-          <button v-if="searching" class="back" type="button" @click="clearSearch">
-            ← 回推荐
-          </button>
-        </h2>
+        <div class="toolbar">
+          <h2>
+            <span class="mark">★</span>
+            {{ searching ? `「${searchKeyword}」的搜索结果` : titleText }}
+            <span class="count">{{ cards.length }} 条</span>
+            <button v-if="searching" class="back" type="button" @click="clearSearch">
+              ← 回推荐
+            </button>
+          </h2>
+
+          <div v-if="!searching" class="tools">
+            <div class="chips">
+              <button
+                v-for="c in chips"
+                :key="c.name"
+                class="chip"
+                type="button"
+                :class="{ on: c.name === category }"
+                @click="pickCategory(c.name)"
+              >
+                {{ c.name }}<i v-if="c.total">{{ c.total }}</i>
+              </button>
+            </div>
+            <button class="shuffle" type="button" :disabled="loading" @click="shuffle">
+              ↻ 换一批
+            </button>
+          </div>
+        </div>
 
         <p v-if="loading" class="state">正在翻箱倒柜…</p>
         <p v-else-if="!cards.length" class="state">啥都没找到，换个词试试～</p>
 
         <div v-else class="grid">
-          <article v-for="card in cards" :key="card.id" class="rec-card">
+          <article
+            v-for="(card, i) in cards"
+            :key="card.id"
+            class="rec-card"
+            role="button"
+            tabindex="0"
+            @click="openCard(i)"
+            @keydown.enter="openCard(i)"
+          >
             <div class="deco" :style="{ background: card.color }">{{ card.symbol }}</div>
             <div class="body">
+              <span class="cat">{{ card.category }}</span>
               <h3>{{ card.title }}</h3>
               <p>{{ card.description }}</p>
               <span class="tag">{{ card.tag }}</span>
@@ -33,18 +71,37 @@
           </article>
         </div>
       </section>
+
+      <ShinchanGame class="game-block" :username="username" @toast="showToast" />
+
+      <div ref="galleryEl">
+        <CharacterGallery />
+      </div>
+
+      <footer class="foot">春日部乐园 · 内容仅供学习娱乐 · 企划·制作 野原新之助</footer>
     </main>
 
     <ToastNote :show="!!toast" :text="toast" @close="toast = ''" />
+
+    <ContentModal
+      :item="activeCard"
+      @close="closeCard"
+      @prev="stepCard(-1)"
+      @next="stepCard(1)"
+    />
   </div>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRouter } from 'vue-router'
 import NavBar from '../components/NavBar.vue'
 import SearchBar from '../components/SearchBar.vue'
 import ToastNote from '../components/ToastNote.vue'
+import DailyQuote from '../components/DailyQuote.vue'
+import CharacterGallery from '../components/CharacterGallery.vue'
+import ShinchanGame from '../components/ShinchanGame.vue'
+import ContentModal from '../components/ContentModal.vue'
 
 const router = useRouter()
 const toast = ref('')
@@ -65,20 +122,40 @@ const username = (() => {
   }
 })()
 
-// 首页内容：来自后端 content 表（推荐列表 / 搜索结果共用一份渲染）
+/* ---------------- 首页内容 ---------------- */
+const PAGE_SIZE = 12
 const cards = ref([])
 const loading = ref(true)
 const searching = ref(false)
 const searchKeyword = ref('')
+const category = ref('全部')
+const categoryStats = ref([])
+
+const navItems = ['首页', '动画', '漫画', '游戏', '角色']
+const navCurrent = ref('首页')
+
+const chips = computed(() => [
+  { name: '全部', total: 0 },
+  ...categoryStats.value.map((c) => ({ name: c.category, total: c.total }))
+])
+
+const titleText = computed(() => (category.value === '全部' ? '今日推荐' : `${category.value}专区`))
+
+const galleryEl = ref(null)
 
 onMounted(() => {
-  fetchContents()
+  // 首屏用随机推荐，保证每次进来都能看到不同的小新内容
+  shuffle()
+  loadCategories()
   // 从登录页跳过来时给一个欢迎气泡
   if (sessionStorage.getItem('shinchan-welcome')) {
     sessionStorage.removeItem('shinchan-welcome')
     showToast(`动感超人出击！\n欢迎回来，${username}～`)
   }
+  window.addEventListener('keydown', onKeyDown)
 })
+
+onUnmounted(() => window.removeEventListener('keydown', onKeyDown))
 
 async function request(url, fallbackMessage) {
   const res = await fetch(url)
@@ -89,11 +166,18 @@ async function request(url, fallbackMessage) {
   return data.data || []
 }
 
-/** 首页推荐列表 */
+function categoryQuery() {
+  return category.value === '全部' ? '' : `&category=${encodeURIComponent(category.value)}`
+}
+
+/** 列表（按 id 顺序，首页默认 12 条） */
 async function fetchContents() {
   loading.value = true
   try {
-    cards.value = await request(`${API_BASE}/api/contents`, '推荐加载失败')
+    cards.value = await request(
+      `${API_BASE}/api/contents?limit=${PAGE_SIZE}${categoryQuery()}`,
+      '推荐加载失败'
+    )
   } catch (e) {
     cards.value = []
     showToast(`推荐加载失败了\n${e.message || '待会儿再试'}`)
@@ -102,10 +186,36 @@ async function fetchContents() {
   }
 }
 
+/** 换一批：同分类随机 */
+async function shuffle() {
+  loading.value = true
+  try {
+    cards.value = await request(
+      `${API_BASE}/api/contents/recommend?size=${PAGE_SIZE}${categoryQuery()}`,
+      '换一批失败了'
+    )
+  } catch (e) {
+    cards.value = []
+    showToast(`换一批失败了\n${e.message || '待会儿再试'}`)
+  } finally {
+    loading.value = false
+  }
+}
+
+/** 分类统计（chips 角标） */
+async function loadCategories() {
+  try {
+    categoryStats.value = await request(`${API_BASE}/api/contents/categories`, '分类加载失败')
+  } catch {
+    categoryStats.value = []
+  }
+}
+
 /** 搜索：走后端 /api/contents/search */
 async function onSearch(keyword) {
   searching.value = true
   searchKeyword.value = keyword
+  navCurrent.value = '首页'
   loading.value = true
   try {
     cards.value = await request(
@@ -127,13 +237,51 @@ function clearSearch() {
   fetchContents()
 }
 
+function pickCategory(name) {
+  if (category.value === name && !searching.value) return
+  category.value = name
+  searching.value = false
+  searchKeyword.value = ''
+  navCurrent.value = name === '全部' ? '首页' : name
+  shuffle()
+}
+
+/** 顶部导航：首页=全部，角色=跳到图鉴，其余=分类筛选 */
+function onNav(item) {
+  if (item === '角色') {
+    pickCategory('角色')
+    galleryEl.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    return
+  }
+  pickCategory(item === '首页' ? '全部' : item)
+}
+
+/* ---------------- 卡片详情 ---------------- */
+const activeIndex = ref(-1)
+const activeCard = computed(() => (activeIndex.value >= 0 ? cards.value[activeIndex.value] : null))
+
+function openCard(i) {
+  activeIndex.value = i
+}
+function closeCard() {
+  activeIndex.value = -1
+}
+function stepCard(step) {
+  if (!cards.value.length) return
+  const len = cards.value.length
+  activeIndex.value = (activeIndex.value + step + len) % len
+}
+function onKeyDown(e) {
+  if (e.key === 'Escape') closeCard()
+  if (!activeCard.value) return
+  if (e.key === 'ArrowLeft') stepCard(-1)
+  if (e.key === 'ArrowRight') stepCard(1)
+}
+
+/* ---------------- 其它 ---------------- */
 function showToast(text) {
   toast.value = text
   setTimeout(() => (toast.value = ''), 2600)
-}
-
-function onNavTodo(label) {
-  showToast(`「${label}」还没做好，\n先去别的地方玩～`)
 }
 
 function onLogout() {
@@ -152,9 +300,9 @@ function onLogout() {
 }
 
 .content {
-  max-width: 960px;
+  max-width: 1000px;
   margin: 0 auto;
-  padding: 48px 20px 64px;
+  padding: 44px 20px 56px;
 }
 
 .hero {
@@ -171,12 +319,20 @@ function onLogout() {
 .hero .sub {
   font-size: 14px;
   color: var(--ink);
-  margin-bottom: 26px;
+  margin-bottom: 24px;
+}
+
+.daily {
+  margin-top: 26px;
 }
 
 .section {
-  margin-top: 52px;
+  margin-top: 34px;
   animation: pop var(--dur-pop) var(--ease-pop) 0.1s both;
+}
+
+.toolbar {
+  margin-bottom: 16px;
 }
 .section h2 {
   display: flex;
@@ -185,10 +341,15 @@ function onLogout() {
   flex-wrap: wrap;
   font-size: 20px;
   letter-spacing: 2px;
-  margin-bottom: 18px;
 }
 .section .mark {
   color: var(--red);
+}
+.section .count {
+  font-size: 12px;
+  font-weight: normal;
+  letter-spacing: 0;
+  color: rgba(43, 43, 43, 0.5);
 }
 .back {
   font-family: inherit;
@@ -208,6 +369,67 @@ function onLogout() {
 .back:active {
   transform: translate(2px, 2px);
   box-shadow: 0 0 0 rgba(43, 43, 43, 0.25);
+}
+
+.tools {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+}
+.chips {
+  display: flex;
+  gap: 7px;
+  flex-wrap: wrap;
+}
+.chip {
+  font-family: inherit;
+  font-size: 13px;
+  padding: 4px 12px;
+  color: var(--ink);
+  background: var(--card-bg);
+  border: 2px solid rgba(43, 43, 43, 0.35);
+  border-radius: 14px 10px 14px 10px;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s, transform 0.08s;
+}
+.chip i {
+  font-style: normal;
+  font-size: 10px;
+  margin-left: 4px;
+  color: rgba(43, 43, 43, 0.45);
+}
+.chip:hover {
+  background: var(--cream);
+}
+.chip.on {
+  color: #fff;
+  background: var(--red);
+  border-color: var(--ink);
+  box-shadow: 2px 2px 0 var(--ink);
+}
+.chip.on i {
+  color: rgba(255, 255, 255, 0.75);
+}
+.shuffle {
+  font-family: inherit;
+  font-size: 13px;
+  padding: 5px 14px;
+  color: var(--blue);
+  background: var(--cream);
+  border: 2px solid var(--blue);
+  border-radius: 14px 10px 14px 10px;
+  cursor: pointer;
+  transition: background 0.12s, transform 0.08s;
+}
+.shuffle:hover:not(:disabled) {
+  background: #e6f3ff;
+}
+.shuffle:disabled {
+  opacity: 0.5;
+  cursor: default;
 }
 
 .state {
@@ -235,6 +457,10 @@ function onLogout() {
   transform: translate(-2px, -4px);
   box-shadow: 9px 11px 0 var(--ink);
 }
+.rec-card:focus-visible {
+  outline: 3px dashed var(--blue);
+  outline-offset: 3px;
+}
 .rec-card .deco {
   height: 66px;
   display: flex;
@@ -246,7 +472,15 @@ function onLogout() {
   border-bottom: 3px solid var(--ink);
 }
 .rec-card .body {
-  padding: 14px 16px 16px;
+  padding: 13px 16px 16px;
+}
+.rec-card .cat {
+  display: inline-block;
+  font-size: 10.5px;
+  letter-spacing: 1px;
+  color: rgba(43, 43, 43, 0.55);
+  border-bottom: 2px dotted rgba(43, 43, 43, 0.3);
+  margin-bottom: 4px;
 }
 .rec-card h3 {
   font-size: 17px;
@@ -266,5 +500,17 @@ function onLogout() {
   background: var(--cream);
   border: 2px solid var(--blue);
   border-radius: 12px 9px 12px 9px;
+}
+
+.game-block {
+  margin-top: 40px;
+}
+
+.foot {
+  margin-top: 44px;
+  text-align: center;
+  font-size: 11.5px;
+  color: rgba(43, 43, 43, 0.42);
+  letter-spacing: 1px;
 }
 </style>

@@ -17,7 +17,6 @@
           >{{ item }}</a
         >
       </div>
-
       <div class="user">
         <span class="hello">{{ username }}</span>
         <button class="logout" type="button" @click="$emit('logout')">溜了溜了</button>
@@ -27,21 +26,18 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
 import ShinchanFace from './ShinchanFace.vue'
 
 defineProps({
   username: { type: String, default: '小伙伴' },
+  items: { type: Array, default: () => ['首页', '动画', '漫画', '游戏', '角色'] },
+  current: { type: String, default: '首页' },
 })
-const emit = defineEmits(['logout', 'nav-todo'])
+const emit = defineEmits(['logout', 'nav'])
 
-const items = ['首页', '动画', '漫画', '游戏']
-const current = ref('首页')
-
+// 导航交给首页处理：首页=全部分类，其余=按分类筛选 / 跳到角色图鉴
 function onClick(item) {
-  if (item === current.value) return
-  // 其他页面还没做，交给首页弹提示
-  emit('nav-todo', item)
+  emit('nav', item)
 }
 </script>
 

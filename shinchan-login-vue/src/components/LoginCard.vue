@@ -30,6 +30,11 @@
 
     <p class="foot">还没有号？<router-link to="/register">马上去注册</router-link></p>
 
+    <p class="demo">
+      试用账号 <b>demo</b> / <b>123456</b>
+      <button class="fill" type="button" @click="fillDemo">一键填入</button>
+    </p>
+
     <ToastNote :show="!!toast" :text="toast" @close="closeToast" />
   </main>
 </template>
@@ -71,6 +76,12 @@ const { username, password, remember, submitting, toast, error, handleSubmit, cl
 
 function onSubmit() {
   handleSubmit()
+}
+
+/** 演示账号一键填入，省得记账号密码 */
+function fillDemo() {
+  username.value = 'demo'
+  password.value = '123456'
 }
 </script>
 
@@ -167,5 +178,40 @@ button.submit:disabled {
 }
 .foot a:hover {
   text-decoration: underline wavy;
+}
+
+.demo {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 12px;
+  padding: 7px 10px;
+  font-size: 12px;
+  color: rgba(43, 43, 43, 0.7);
+  background: var(--cream);
+  border: 2px dashed rgba(43, 43, 43, 0.3);
+  border-radius: 14px 10px 14px 10px;
+}
+.demo b {
+  color: var(--blue);
+}
+.fill {
+  font-family: inherit;
+  font-size: 11.5px;
+  padding: 2px 9px;
+  color: var(--ink);
+  background: var(--yellow);
+  border: 2px solid var(--ink);
+  border-radius: 11px 8px 11px 8px;
+  cursor: pointer;
+  transition: transform 0.08s, background 0.12s;
+}
+.fill:hover {
+  background: #ffe266;
+}
+.fill:active {
+  transform: translate(1px, 1px);
 }
 </style>
