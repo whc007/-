@@ -74,6 +74,10 @@
 
       <ShinchanGame class="game-block" :username="username" @toast="showToast" />
 
+      <div ref="marketEl">
+        <FleaMarket class="market-block" :username="username" @toast="showToast" />
+      </div>
+
       <div ref="galleryEl">
         <CharacterGallery />
       </div>
@@ -101,6 +105,7 @@ import ToastNote from '../components/ToastNote.vue'
 import DailyQuote from '../components/DailyQuote.vue'
 import CharacterGallery from '../components/CharacterGallery.vue'
 import ShinchanGame from '../components/ShinchanGame.vue'
+import FleaMarket from '../components/FleaMarket.vue'
 import ContentModal from '../components/ContentModal.vue'
 
 const router = useRouter()
@@ -131,7 +136,7 @@ const searchKeyword = ref('')
 const category = ref('全部')
 const categoryStats = ref([])
 
-const navItems = ['首页', '动画', '漫画', '游戏', '角色']
+const navItems = ['首页', '动画', '漫画', '游戏', '角色', '跳蚤市场']
 const navCurrent = ref('首页')
 
 const chips = computed(() => [
@@ -142,6 +147,7 @@ const chips = computed(() => [
 const titleText = computed(() => (category.value === '全部' ? '今日推荐' : `${category.value}专区`))
 
 const galleryEl = ref(null)
+const marketEl = ref(null)
 
 onMounted(() => {
   // 首屏用随机推荐，保证每次进来都能看到不同的小新内容
@@ -246,11 +252,16 @@ function pickCategory(name) {
   shuffle()
 }
 
-/** 顶部导航：首页=全部，角色=跳到图鉴，其余=分类筛选 */
+/** 顶部导航：首页=全部，角色=跳到图鉴，跳蚤市场=滚动定位，其余=分类筛选 */
 function onNav(item) {
   if (item === '角色') {
     pickCategory('角色')
     galleryEl.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+    return
+  }
+  if (item === '跳蚤市场') {
+    navCurrent.value = '跳蚤市场'
+    marketEl.value?.scrollIntoView({ behavior: 'smooth', block: 'start' })
     return
   }
   pickCategory(item === '首页' ? '全部' : item)
@@ -503,6 +514,10 @@ function onLogout() {
 }
 
 .game-block {
+  margin-top: 40px;
+}
+
+.market-block {
   margin-top: 40px;
 }
 

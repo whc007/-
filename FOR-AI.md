@@ -88,7 +88,8 @@ curl -s -X POST http://localhost:8081/api/login -H "Content-Type: application/js
 ## 项目结构速查
 
 - `shinchan-login-vue/`：Vue 3.5 + Vite 8 + vue-router。路由 `/login`、`/register`、`/home`（登录后跳转，`App.vue` 共享涂鸦背景与抖动滤镜）。`/api` 由 vite.config.js 代理到 8081。
-- 首页组件：`HomeView.vue`（编排）/ `DailyQuote.vue`（今日台词，可换一句）/ `ShinchanGame.vue`（动感光波大作战 + 排行榜）/ `CharacterGallery.vue`（角色图鉴）/ `ContentModal.vue`（卡片详情弹窗，← → 翻页、Esc 关闭）；静态数据在 `src/data/shinchan.js`。
+- 首页组件：`HomeView.vue`（编排）/ `DailyQuote.vue`（今日台词，可换一句）/ `ShinchanGame.vue`（动感光波大作战 + 排行榜）/ `FleaMarket.vue`（跳蚤市场二手摊，2026-11-16 新增）/ `CharacterGallery.vue`（角色图鉴）/ `ContentModal.vue`（卡片详情弹窗，← → 翻页、Esc 关闭）；静态数据在 `src/data/shinchan.js`。
+- 顶部导航含「跳蚤市场」入口，点击 scrollIntoView 到 `FleaMarket.vue`。
 - `springBootTest/`：Spring Boot 3.4.5 + MyBatis-Plus。统一返回 `Result{code,message,data}`，code=0 成功。接口：
   - `POST /api/login`、`POST /api/register`
   - `GET /api/contents?limit=12&category=动画`（推荐列表，limit 上限 60）
@@ -96,6 +97,10 @@ curl -s -X POST http://localhost:8081/api/login -H "Content-Type: application/js
   - `GET /api/contents/categories`（分类计数，给筛选 chips 用）
   - `GET /api/contents/search?keyword=`（标题/描述/标签/分类模糊匹配，空关键词=推荐列表）
   - `POST /api/game/scores`（{username,score,hits} → 返回 best/rank/total）、`GET /api/game/leaderboard?size=5`
+  - **跳蚤市场**（`/api/market`，对应表 `flea_market_item`）：
+    - `GET /api/market/items?status=on|sold&limit=`（默认全部，按创建时间倒序，limit 上限 100）
+    - `POST /api/market/items`（{title, price, description?, symbol?, color?, seller}；价格 1-9999；颜色白名单对齐 variables.css 的 8 个变量）
+    - `POST /api/market/items/{id}/buy`（{buyer}；不能买自己的，不能重复购买）
   - 登录态未持久化（前端用 sessionStorage 记住当前用户，仅前端层面）。
 - 内容数据：`content` 表 52 条（动画 17 / 漫画 9 / 游戏 8 / 剧场版 10 / 角色 6 / 美食 2），种子在 `sql/content_schema.sql`（INSERT IGNORE，可重复执行）。
 - 根目录 `package-lock.json` 与 `springBootTest/package-lock.json` 是历史误生成的空壳，无害。
