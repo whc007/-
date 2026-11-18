@@ -3,6 +3,15 @@
 > 这台电脑每次开机都会重置：`node_modules` 和 `target` 会被清空，WorkBuddy 会话目录也会换。
 > 你的第一要务是 **别重新探索，直接跑脚本**。下面全是已验证的事实，照做即可。
 
+## 访问地址（2026-11-18 改为局域网 IP）
+
+前后端已统一绑定到本机局域网 IP **`192.168.68.6`**（不再用 `localhost`）：
+
+- 前端：`http://192.168.68.6:5173`，登录页 `http://192.168.68.6:5173/login`
+- 后端：`http://192.168.68.6:8081`
+- 实现位置：`vite.config.js` 的 `server.host` 与 `proxy.target`、`application-dev.properties` 的 `server.address`、根目录两个启动 `.bat`
+- 局域网内其他设备可直接用这个 IP 访问；用 curl 自测时仍要加 `--noproxy '*'`，否则会被本机代理干扰返回 502
+
 ## 第一步：跑脚本（总是优先）
 
 | 目的 | 脚本（项目根，相对路径） |
@@ -16,20 +25,27 @@
 前端脚本检测到 `node_modules` 不存在会自动 `npm ci`（失败回退 `npm install`）。
 脚本不需要 `node_modules` / `target` 预先存在。
 
-**`启动项目.bat` 现在的行为**（2026-11-09 修订，原版备份为 `*.bat.bak`）：
-1. 先按端口 kill 掉 5173 / 8081 上的残留监听进程（避免新窗口因端口占用起不来）；
+**`启动项目.bat` 现在的行为**（2026-11-18 二次修订；重复的 `*.bat.bak` 已删除）：
+1. 先按端口 kill 掉 5173 / 8081 上的残留监听进程（一次 `netstat` 快照，不再每端口扫两遍）；
 2. 两个窗口分别起后端 / 前端；
-3. **轮询等到 5173 和 8081 都真的能访问**（最多 90 秒，每 3 秒打一行"已等待 N 秒"）；
-4. 就绪后自动打开 `http://localhost:5173/login`；超时则打印是哪一侧没起来。
+3. **轮询等到 5173 和 8081 都真的能访问**，间隔 **1 秒**（原来 3 秒），最多 90 秒，每 5 秒打一行"已等待 N 秒"；
+4. 就绪后**立即**打开 `http://192.168.68.6:5173/login`（去掉了原来结尾硬等 6 秒）；超时则打印是哪一侧没起来。
+
+**提速要点（2026-11-18 实测约 4.5 秒两侧就绪，原来 9~15 秒）**：
+- 后端走**快速路径**：`target\classes` 已存在时直接 `java -cp "target\classes;target\lib\*" 主类 --server.port=8081`，**跳过 Maven**（省掉项目扫描 + 插件解析，约省 6~12 秒）。依赖目录是 `target\lib\`（84 个 jar），缺失时脚本自动用 `dependency:copy-dependencies` 生成一次（约 16 秒，仅首次）。
+- ⚠️ **别用 `set /p` 读 classpath**：`set /p` 单行上限 1023 字符，而完整 classpath 长达 9141 字符，会静默截断成 9/84 个 jar 直接 NoClassDefFoundError（2026-11-18 踩过，已改为 `target\lib\*` 通配符，`target\classpath.txt` 已删）。
+- 后端无 `target`（每次开机被清空）时回退 Maven，并加 `-Dmaven.test.skip=true` 跳过空跑的测试编译。
+- 前端依赖已就绪时直接 `node node_modules\vite\bin\vite.js`，省掉 `npm run` 一层壳；只有 `node_modules\vite\bin\vite.js` 缺失才装依赖。
+- 两侧**并行**启动、同步轮询，不再串行等。
 
 **演示账号：`demo` / `123456`**（`user_schema.sql` 里的 INSERT IGNORE 种子，登录页底部有「一键填入」）。
 
 ## 用户说"进不去首页"时，按这个顺序查（30 秒）
 
-1. `curl -s -o /dev/null -w "%{http_code}" http://localhost:5173/` → 不是 200 就是前端没起来（最常见：依赖没装完就打开浏览器、或端口被旧进程占着）。
-2. `curl -s -o /dev/null -w "%{http_code}" http://localhost:8081/api/contents` → 不是 200 就是后端没起来。
-3. 两个都 200 还进不去，就是**登录失败**：直接 `curl -X POST /api/login -d '{"username":"demo","password":"123456"}'` 验证；返回 `code:1` 说明账号/密码不对，用 `demo` 或先注册。
-4. 注意 `http://localhost:5173/` 会自动跳到 `/login`，`/home` 有前端守卫（sessionStorage 里没有 `shinchan-user` 就弹回登录页）——**没登录时直接访问 /home 一定进不去**，这是设计行为。
+1. `curl -s --noproxy '*' -o /dev/null -w "%{http_code}" http://192.168.68.6:5173/` → 不是 200 就是前端没起来（最常见：依赖没装完就打开浏览器、或端口被旧进程占着）。
+2. `curl -s --noproxy '*' -o /dev/null -w "%{http_code}" http://192.168.68.6:8081/api/contents` → 不是 200 就是后端没起来。
+3. 两个都 200 还进不去，就是**登录失败**：直接 `curl -X POST http://192.168.68.6:8081/api/login -d '{"username":"demo","password":"123456"}'` 验证；返回 `code:1` 说明账号/密码不对，用 `demo` 或先注册。
+4. 注意 `http://192.168.68.6:5173/` 会自动跳到 `/login`，`/home` 有前端守卫（sessionStorage 里没有 `shinchan-user` 就弹回登录页）——**没登录时直接访问 /home 一定进不去**，这是设计行为。
 
 
 ## 如果 .bat 被工具沙箱拦截（WorkBuddy 会话里常见）
@@ -39,7 +55,12 @@ WorkBuddy 的 Bash / PowerShell 工具会直接拒绝 `cmd.exe`（`Command block
 改用下面这套纯进程命令，已验证可跑通（后端 2.5s 启动、前端 0.9s ready）。
 
 ```bash
-# 后端：绕过 mvn.cmd，直接用 java 起 Maven launcher
+# 后端最快路径（2026-11-18 实测 1 秒就绪，比走 Maven 省 6~12 秒）
+# 前提：target\classes 与 target\lib\*.jar 存在；lib 缺失时先跑一次 dependency:copy-dependencies
+cd /d/workSpace/-/springBootTest && unset SERVER__PORT
+java -cp "target/classes;target/lib/*" com.fenglin.springboottest.SpringBootTestApplication --server.port=8081
+
+# 后端：绕过 mvn.cmd，直接用 java 起 Maven launcher（首次 / 无 target 时用）
 MVN="C:\Users\Administrator\.m2\wrapper\dists\apache-maven-3.9.9-bin\4nf9hui3q3djbarqar9g711ggc\apache-maven-3.9.9"
 cd /d/workSpace/-/springBootTest && unset SERVER__PORT
 java -classpath "$MVN\boot\plexus-classworlds-2.8.0.jar" \
@@ -48,8 +69,8 @@ java -classpath "$MVN\boot\plexus-classworlds-2.8.0.jar" \
   org.codehaus.plexus.classworlds.launcher.Launcher \
   -B spring-boot:run -Dspring-boot.run.arguments=--server.port=8081
 
-# 前端：用 Bash 工具（npm shim 可用），先 npm ci 再 npm run dev
-cd /d/workSpace/-/shinchan-login-vue && npm ci && npm run dev
+# 前端：直接调本地 vite（比 npm run dev 少一层壳），依赖缺失时先 npm ci
+cd /d/workSpace/-/shinchan-login-vue && node "node_modules/vite/bin/vite.js"
 ```
 
 两个命令都用 `run_in_background: true` 跑，输出用 `| tee <日志文件>` 落盘再 tail 查看。
@@ -67,10 +88,19 @@ cd /d shinchan-login-vue
 npm ci && npm run dev
 ```
 
+## 角色图鉴头像（2026-11-18 新增）
+
+- 12 个角色的 AI 原创插画头像，放在 `shinchan-login-vue/src/assets/characters/`，文件名即角色 key：`shin|misae|hiroshi|himawari|shiro|kazama|nene|masao|bo|principal|yoshinaga|action`.jpg
+- 共 416 KB（400×400 JPEG q86），已裁掉 AI 生成水印。原图约 11 MB，勿直接用。
+- 引用链路：`src/data/avatars.js` 用 `import` 收集图片 URL → `CharacterGallery.vue` 按 `characters[i].key` 取图。
+- `shinchan.js` 的每个角色对象新增 `key` 字段，是图片与角色的唯一关联。**加新角色时两处都要补**：`characters` 数组加对象（含 key），`avatars.js` 加 import 与映射项。
+- 组件里保留了降级：`avatars[key]` 缺失时回退显示原来的文字圆形徽章（`initial`），不会白屏。
+- 图片用 `loading="lazy"`，横向滚动的图鉴里右侧头像要滚动到才会加载，属于正常现象。
+
 ## 已验证的环境坑（不要再花时间重新排查）
 
 1. **Git Bash 下 `./mvnw` 必失败**：报 `ClassNotFoundException: plexus.classworlds.launcher.Launcher`，原因是 bash 脚本把 Unix 风格 classpath 传给 Windows Java。→ 用 `mvnw.cmd`（cmd/PowerShell），或缓存 Maven `~/.m2/wrapper/dists/apache-maven-3.9.9-bin/*/apache-maven-3.9.9/bin/mvn.cmd`。
-2. **环境变量 `SERVER__PORT=63956` 会被 Spring Boot 当成 `server.port`**，覆盖配置的 8081，而 63956 已被平台进程占用 → `Port 63956 was already in use`。→ 启动前 `set "SERVER__PORT="` 并显式 `--server.port=8081`。
+2. **环境变量 `SERVER__PORT` 会被 Spring Boot 当成 `server.port`**（值每次开机都不同：2026-11-18 实测 60860，早前记录为 63956），覆盖配置的 8081，而该随机端口已被平台进程占用 → `Port <随机值> was already in use`。→ 启动前 `set "SERVER__PORT="` 并显式 `--server.port=8081`。
 3. 本机无全局 `mvn`；有 Java 21、Node 22、MySQL 8.0（账号见 `application-dev.properties`）。
 4. 库表自动建：JDBC `createDatabaseIfNotExist=true` + `spring.sql.init` 执行 `resources/sql/` 下全部脚本（`user_schema.sql` → 表 `sys_user`，`content_schema.sql` → 表 `content` 含 12 条种子数据，均幂等可重复执行）。
 5. `npm install` 报 2 个 high 漏洞：**不要**执行 `npm audit fix`（会破坏 Vite 8 版本组合），用户已知晓。
@@ -80,14 +110,14 @@ npm ci && npm run dev
 ## 启动后验证（30 秒）
 
 ```bash
-curl -s -o /dev/null -w "%{http_code}" http://localhost:5173/
-curl -s -X POST http://localhost:8081/api/login -H "Content-Type: application/json" -d "{\"username\":\"probe\",\"password\":\"x\"}"
+curl -s --noproxy '*' -o /dev/null -w "%{http_code}" http://192.168.68.6:5173/
+curl -s --noproxy '*' -X POST http://192.168.68.6:8081/api/login -H "Content-Type: application/json" -d "{\"username\":\"probe\",\"password\":\"x\"}"
 # 期望：5173 返回 200；接口返回 {"code":1,...}（code=1 说明链路通，只是账号不存在）
 ```
 
 ## 项目结构速查
 
-- `shinchan-login-vue/`：Vue 3.5 + Vite 8 + vue-router。路由 `/login`、`/register`、`/home`（登录后跳转，`App.vue` 共享涂鸦背景与抖动滤镜）。`/api` 由 vite.config.js 代理到 8081。
+- `shinchan-login-vue/`：Vue 3.5 + Vite 8 + vue-router。路由 `/login`、`/register`、`/home`（登录后跳转，`App.vue` 共享涂鸦背景与抖动滤镜）。`/api` 由 vite.config.js 代理到 `192.168.68.6:8081`。
 - 首页组件：`HomeView.vue`（编排）/ `DailyQuote.vue`（今日台词，可换一句）/ `ShinchanGame.vue`（动感光波大作战 + 排行榜）/ `FleaMarket.vue`（跳蚤市场二手摊，2026-11-16 新增）/ `CharacterGallery.vue`（角色图鉴）/ `ContentModal.vue`（卡片详情弹窗，← → 翻页、Esc 关闭）；静态数据在 `src/data/shinchan.js`。
 - 顶部导航含「跳蚤市场」入口，点击 scrollIntoView 到 `FleaMarket.vue`。
 - `springBootTest/`：Spring Boot 3.4.5 + MyBatis-Plus。统一返回 `Result{code,message,data}`，code=0 成功。接口：

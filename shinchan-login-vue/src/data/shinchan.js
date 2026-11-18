@@ -22,6 +22,7 @@ export const quotes = [
 /** 角色图鉴 */
 export const characters = [
   {
+    key: 'shin',
     name: '野原新之助',
     nick: '小新',
     age: '5 岁',
@@ -31,6 +32,7 @@ export const characters = [
     color: 'var(--red)'
   },
   {
+    key: 'misae',
     name: '野原美冴',
     nick: '美冴妈妈',
     age: '二十代（自称）',
@@ -40,6 +42,7 @@ export const characters = [
     color: 'var(--cheek)'
   },
   {
+    key: 'hiroshi',
     name: '野原广志',
     nick: '广志爸爸',
     age: '35 岁',
@@ -49,6 +52,7 @@ export const characters = [
     color: 'var(--blue)'
   },
   {
+    key: 'himawari',
     name: '野原向日葵',
     nick: '小葵',
     age: '0 岁',
@@ -58,6 +62,7 @@ export const characters = [
     color: 'var(--yellow)'
   },
   {
+    key: 'shiro',
     name: '小白',
     nick: '小白',
     age: '汪',
@@ -67,6 +72,7 @@ export const characters = [
     color: 'var(--skin)'
   },
   {
+    key: 'kazama',
     name: '风间彻',
     nick: '风间',
     age: '5 岁',
@@ -76,6 +82,7 @@ export const characters = [
     color: 'var(--blue)'
   },
   {
+    key: 'nene',
     name: '樱田妮妮',
     nick: '妮妮',
     age: '5 岁',
@@ -85,6 +92,7 @@ export const characters = [
     color: 'var(--red)'
   },
   {
+    key: 'masao',
     name: '佐藤正男',
     nick: '正男',
     age: '5 岁',
@@ -94,6 +102,7 @@ export const characters = [
     color: 'var(--skin)'
   },
   {
+    key: 'bo',
     name: '阿呆',
     nick: '阿呆',
     age: '5 岁',
@@ -103,6 +112,7 @@ export const characters = [
     color: 'var(--yellow)'
   },
   {
+    key: 'principal',
     name: '园长先生',
     nick: '园长',
     age: '中年',
@@ -112,6 +122,7 @@ export const characters = [
     color: 'var(--blue)'
   },
   {
+    key: 'yoshinaga',
     name: '吉永绿',
     nick: '吉永老师',
     age: '年轻',
@@ -121,6 +132,7 @@ export const characters = [
     color: 'var(--cheek)'
   },
   {
+    key: 'action',
     name: '动感超人',
     nick: '动感超人',
     age: '永远年轻',

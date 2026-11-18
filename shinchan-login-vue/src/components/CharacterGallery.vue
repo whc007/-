@@ -15,7 +15,16 @@
         :class="{ open: active === c.name }"
         @click="toggle(c.name)"
       >
-        <span class="badge" :style="{ background: c.color }">{{ c.initial }}</span>
+        <span class="avatar" :style="{ background: c.color }">
+          <img
+            v-if="avatars[c.key]"
+            :src="avatars[c.key]"
+            :alt="c.name"
+            loading="lazy"
+            decoding="async"
+          />
+          <i v-else class="initial">{{ c.initial }}</i>
+        </span>
         <span class="nm">{{ c.name }}</span>
         <span class="meta">{{ c.age }} · {{ c.role }}</span>
         <span v-if="active === c.name" class="line">「{{ c.line }}」</span>
@@ -27,6 +36,7 @@
 <script setup>
 import { ref } from 'vue'
 import { characters } from '../data/shinchan.js'
+import { avatars } from '../data/avatars.js'
 
 const active = ref('')
 
@@ -74,12 +84,12 @@ function toggle(name) {
 
 .person {
   flex: none;
-  width: 132px;
+  width: 148px;
   display: flex;
   flex-direction: column;
   align-items: center;
   gap: 3px;
-  padding: 12px 8px 10px;
+  padding: 12px 8px 12px;
   font-family: inherit;
   text-align: center;
   background: var(--card-bg);
@@ -98,18 +108,37 @@ function toggle(name) {
   box-shadow: 4px 5px 0 var(--red);
 }
 
-.badge {
-  width: 40px;
-  height: 40px;
+.avatar {
+  position: relative;
+  width: 84px;
+  height: 84px;
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 19px;
+  overflow: hidden;
+  border: 2.5px solid var(--ink);
+  border-radius: 50% 46% 52% 47%;
+  margin-bottom: 5px;
+  transition: border-color 0.12s;
+}
+.avatar img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+.avatar .initial {
+  font-style: normal;
+  font-size: 30px;
   color: #fff;
   text-shadow: 1.5px 1.5px 0 var(--ink);
-  border: 2.5px solid var(--ink);
-  border-radius: 50% 45% 52% 47%;
-  margin-bottom: 3px;
+}
+.person:hover .avatar {
+  border-color: var(--ink);
+  filter: saturate(1.08);
+}
+.person.open .avatar {
+  border-color: var(--red);
 }
 .nm {
   font-size: 13px;
