@@ -11,8 +11,8 @@ rem  依赖：Java 21、Node 22、MySQL(3306)、Maven wrapper 缓存
 rem ============================================================
 
 set "ROOT=%~dp0"
-set "FRONT_URL=http://192.168.68.6:5173"
-set "BACK_URL=http://192.168.68.6:8081"
+set "FRONT_URL=http://192.168.68.2:5173"
+set "BACK_URL=http://192.168.68.2:8081"
 
 rem 清掉会覆盖 Spring Boot server.port 的环境变量
 set "SERVER__PORT="

@@ -34,8 +34,8 @@ if not exist "node_modules\vite\bin\vite.js" (
 echo.
 echo ============================================
 echo  前端访问地址（局域网内其他设备可直接用）
-echo    首页 http://192.168.68.6:5173
-echo    登录 http://192.168.68.6:5173/login
+echo    首页 http://192.168.68.2:5173
+echo    登录 http://192.168.68.2:5173/login
 echo ============================================
 echo.
 echo [前端] 启动 Vite...

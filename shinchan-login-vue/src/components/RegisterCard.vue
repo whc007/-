@@ -38,7 +38,7 @@ import FormField from './FormField.vue'
 import ToastNote from './ToastNote.vue'
 
 // 后端地址：默认走 Vite 开发代理（/api -> 8081）；
-// 生产构建可通过环境变量 VITE_API_BASE 指定，例如 http://localhost:8081
+// 生产构建可通过环境变量 VITE_API_BASE 指定，例如 http://192.168.68.2:8081
 const API_BASE = import.meta.env.VITE_API_BASE || ''
 
 // 真正对接后端的注册请求；失败需抛出带 message 的错误，由 composable 显示
